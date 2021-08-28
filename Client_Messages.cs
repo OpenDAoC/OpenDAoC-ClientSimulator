@@ -34,7 +34,6 @@ namespace AtlasSimulator
             var pos = WriteHeader(buffer, 0xA7);
             
             WriteUShort(buffer, ref pos, 36); // Client Type
-            Console.WriteLine($"Current pos = {pos}");
             buffer[pos++] = 0x01; // Major
             buffer[pos++] = 0x02; // Minor
             buffer[pos++] = 0x03; // Build

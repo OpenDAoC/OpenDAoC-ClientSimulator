@@ -25,15 +25,14 @@ namespace AtlasSimulator
 
         internal static void spamAlbDragon()
         {
+            // Settings
             string nameSeed = "DragonTest";
             string password = "foo";
 
-            int numx = 15;
-            int numy = 5;
-            int totalAccounts = numx * numy;
+            int numx = 2;
+            int numy = 2;
+            
             int posOffset = 50;
-
-            PlayerCreator pc = new PlayerCreator();
 
             PlayerCreator.Position albDragPosition = new PlayerCreator.Position
             {
@@ -43,7 +42,10 @@ namespace AtlasSimulator
                 zone = 1
             };
 
+
             // Create accounts
+            PlayerCreator pc = new PlayerCreator();
+            int totalAccounts = numx * numy;
             int index = 0;
             for (int i = 0; i < numx; ++i)
             {
@@ -77,10 +79,10 @@ namespace AtlasSimulator
         internal static void Main(string[] args)
         {
             // Basic test case
-            //simpleCreateAndLogin();
+            simpleCreateAndLogin();
 
             // Alb Dragon Test
-            spamAlbDragon();
+            //spamAlbDragon();
 
             // Keep program alive
             Console.ReadLine();
