@@ -18,7 +18,6 @@ namespace AtlasSimulator
 
         private Timer _pingTimer;
         private Timer _positionTimer;
-        private Timer _chantTimer;
 
         public const int ServerHeaderReadBufferSize = 3;
         public const int WriterBufferSize = 2048;
@@ -51,6 +50,11 @@ namespace AtlasSimulator
         {
             Process(socketAsyncEventArgs);
         }
+
+        // public void setAction(TimerCallback tcb)
+        // {
+        //     _actionCallback = tcb;
+        // }
 
         private void Process(SocketAsyncEventArgs sargs)
         {
@@ -421,18 +425,29 @@ namespace AtlasSimulator
                 
                 _pingTimer?.Dispose();
                 _positionTimer?.Dispose();
-                _chantTimer?.Dispose();
                 _tcpSocket?.Dispose();
                 _tcpReceiverSargs?.Dispose();
                 _writeSemaphore?.Dispose();
 
                 _pingTimer = null;
                 _positionTimer = null;
-                _chantTimer = null;
                 _tcpSocket = null;
                 
                 Console.WriteLine("Disposed {0}", _charName);
             }
         }
     }
+    
+    public class GLocation
+    {
+        public GLocation(int x, int y, int z, int zone)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.zone = zone;
+        }
+        public int x, y, z;
+        public int zone;
+    };
 }

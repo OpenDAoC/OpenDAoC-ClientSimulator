@@ -90,9 +90,7 @@ namespace AtlasSimulator
             if (_positionTimer == null)
             {
                 _positionTimer = new Timer(PositionTimerCallback, null, 1000, 250);
-                
-                _randomDelay = Random.Next(8000, 10000);
-                _chantTimer = new Timer(ChantTimerCallback, null, 850, _randomDelay);
+                //_actionTimer = new Timer(_actionCallback, null, 850, _actionDelay);
             }
 
             ZoneX = x_loc;
@@ -100,9 +98,7 @@ namespace AtlasSimulator
             ZoneZ = z_loc;
             PositionSpeed = 0;
         }
-
-        private static Random Random = new Random();
-        private int _randomDelay;
+        
         private void HandlePlayerPositionUpdate(byte[] buffer, int pos, int bodyLen)
         {
             //Console.WriteLine("Calling HandlePlayerPositionUpdate");
@@ -118,9 +114,7 @@ namespace AtlasSimulator
             if (_positionTimer == null)
             {
                 _positionTimer = new Timer(PositionTimerCallback, null, 1000, 250);
-                
-                _randomDelay = Random.Next(3000, 20000);
-                _chantTimer = new Timer(ChantTimerCallback, null, 850, _randomDelay);
+                //_actionTimer = new Timer(_actionCallback, null, 850, _actionDelay);
             }
 
             ZoneX = x_loc;

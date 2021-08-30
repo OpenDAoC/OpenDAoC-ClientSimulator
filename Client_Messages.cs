@@ -160,7 +160,27 @@ namespace AtlasSimulator
             
             Send(buffer, pos);
         }
-        
+
+        public void SendUseSpell(ushort speedData, byte spellIndex, byte spellType)
+        {
+            //Console.WriteLine("Calling SendUseSkill: " + spellType.ToString());
+            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
+            var pos = WriteHeader(buffer, 0x7D);
+            WriteFloat32LowEndian(buffer, ref pos, ZoneX);
+            WriteFloat32LowEndian(buffer, ref pos, ZoneY);
+            WriteFloat32LowEndian(buffer, ref pos, ZoneZ);
+            WriteFloat32LowEndian(buffer, ref pos, PositionSpeed);
+            WriteUShort(buffer, ref pos, 0);
+            WriteUShort(buffer, ref pos, 0);
+            buffer[pos++] = spellIndex;
+            buffer[pos++] = spellType;
+            WriteUShort(buffer, ref pos, 0);
+            WriteLength(buffer, pos);
+            pos = AppendChecksum(buffer, 0, pos);
+
+            Send(buffer, pos);
+        }
+
         private void SendPositionUpdate()
         {
             //Console.WriteLine("Calling SendPositionUpdate");
