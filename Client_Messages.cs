@@ -161,7 +161,7 @@ namespace AtlasSimulator
             Send(buffer, pos);
         }
 
-        public void SendUseSpell(ushort speedData, byte spellIndex, byte spellType)
+        public void SendUseSpell(ushort speedData, byte spellLevel, byte spellLineIndex)
         {
             //Console.WriteLine("Calling SendUseSkill: " + spellType.ToString());
             var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
@@ -172,8 +172,8 @@ namespace AtlasSimulator
             WriteFloat32LowEndian(buffer, ref pos, PositionSpeed);
             WriteUShort(buffer, ref pos, 0);
             WriteUShort(buffer, ref pos, 0);
-            buffer[pos++] = spellIndex;
-            buffer[pos++] = spellType;
+            buffer[pos++] = spellLevel;
+            buffer[pos++] = spellLineIndex;
             WriteUShort(buffer, ref pos, 0);
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);

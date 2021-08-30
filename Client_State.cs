@@ -18,5 +18,6 @@
         private ushort ZoneId;
         private ushort PositionHeading;
         private float PositionSpeed;
+        
     }
 }

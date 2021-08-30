@@ -83,7 +83,7 @@ namespace AtlasSimulator
             
             // Simple Test case
             GLocation g = new GLocation(390969,754234,200,1);
-            Paladin p = new Paladin("FooPally", "FooPassword", "FooPally", g);
+            Wizard p = new Wizard("FooWizzy", "FooPassword", "FooWizzy", g);
             pc.Create(p);
             p.login();
 

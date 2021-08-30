@@ -24,13 +24,22 @@ namespace AtlasSimulator.playerclasses
 
         public static ClassData GetPaladinData()
         {
-            int[] paladinRaceSelection = new int[] {1, 2, 3};
+            int[] paladinRaceSelection = new int[] {1};
             int creationModel = 37122;
             int realm = 1;
             int classid = 1;
             string specString = "Slash|50;Thrust|1;Crush|1;Two Handed|50;Chants|50;Shields|50;Parry|1";
-            ClassData cd = new ClassData(paladinRaceSelection, creationModel,classid,realm,specString);
-            return cd;
+            return new ClassData(paladinRaceSelection, creationModel,classid,realm,specString);
+        }
+        
+        public static ClassData GetWizardData()
+        {
+            int[] wizardRaceSelection = new int[] {1};
+            int creationModel = 12352;
+            int realm = 1;
+            int classid = 7;
+            string specString = "Earth Magic|50;Cold Magic|50;Fire Magic|50";
+            return new ClassData(wizardRaceSelection, creationModel,classid,realm,specString);
         }
     }
 }
