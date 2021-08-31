@@ -31,7 +31,7 @@ namespace AtlasSimulator.playerclasses
                 " `Piety`, `Empathy`, `Charisma`, `MaxEndurance`, `Endurance`, `Concentration`, `AccountName`, `AccountSlot`," +
                 "`Name`, `Race`, `Level`, `Class`, `Realm`, `CreationModel`, `CurrentModel`, `Region`, `Xpos`," +
                 " `Ypos`, `Zpos`, `BindXpos`, `BindYpos`, `BindZpos`, `BindRegion`, `MaxSpeed`, `SerializedSpecs`, `DOLCharacters_ID`)" +
-                " VALUES('400', '400', '400', '400', '1000', '400', '400', '400', '100', '100', '100'," +
+                " VALUES('400', '400', '400', '400', '10000', '400', '400', '400', '100', '100', '100'," +
                 " '{0}', '1', '{1}', '{2}', '50', '{3}', '{4}', '{5}', '{5}', '{6}', '{7}'," +
                 " '{8}', '{9}','{7}', '{8}', '{9}', '{5}', '191', '{10}', '{11}');",
                 accountName, charname, wizzyData._validRaces[0], wizzyData._classID, wizzyData._realm, wizzyData._creationModel,
