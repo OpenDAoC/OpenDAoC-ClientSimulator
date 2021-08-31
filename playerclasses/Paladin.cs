@@ -37,8 +37,7 @@ namespace AtlasSimulator.playerclasses
                 accountName, charname, paladinData._validRaces[0], paladinData._classID, paladinData._realm, paladinData._creationModel,
                 initialGLocation.zone, initialGLocation.x,
                 initialGLocation.y, initialGLocation.z, paladinData._specString, IDGenerator.GenerateID());
-            Console.WriteLine(sql);
-            
+
             // setup actions
             _actionTimer = new Timer(ActionCallback, null, 850, 8500);
 

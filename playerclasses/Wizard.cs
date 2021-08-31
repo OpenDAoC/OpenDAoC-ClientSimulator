@@ -37,8 +37,7 @@ namespace AtlasSimulator.playerclasses
                 accountName, charname, wizzyData._validRaces[0], wizzyData._classID, wizzyData._realm, wizzyData._creationModel,
                 initialGLocation.zone, initialGLocation.x,
                 initialGLocation.y, initialGLocation.z, wizzyData._specString, IDGenerator.GenerateID());
-            Console.WriteLine(sql);
-            
+
             // setup actions
             _actionTimer = new Timer(ActionCallback, null, 850, 1000);
 
