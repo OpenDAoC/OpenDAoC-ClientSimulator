@@ -18,7 +18,7 @@ namespace AtlasSimulator
             // Simple Test case
 
 
-            int numAccounts = 200;
+            int numAccounts = 50;
             int spread = 50;
             var clients = new IPlayerClass[numAccounts];
             var rand = new Random();
