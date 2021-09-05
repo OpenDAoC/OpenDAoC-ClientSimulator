@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Threading;
-using DOL.Database.UniqueID;
+using System.Windows;
 
 namespace AtlasSimulator.playerclasses
 {
-    public class Wizard : IPlayerClass
+    public class Wizard : PlayerClass
     {
-        public string accountName { get; }
-        public string charname { get; }
-        public string password { get; }
-        public string sql { get; }
-        private Client _client;
-        private Timer _actionTimer;
 
         public Wizard(string acc, string pw, string cn, GLocation initialGLocation)
         {
@@ -19,7 +13,7 @@ namespace AtlasSimulator.playerclasses
             accountName = acc;
             password = pw;
             charname = cn;
-            
+
             // setup client
             _client = new Client(acc, pw, cn);
 
@@ -36,21 +30,21 @@ namespace AtlasSimulator.playerclasses
                 " '{8}', '{9}','{7}', '{8}', '{9}', '{5}', '191', '{10}', '{11}');",
                 accountName, charname, wizzyData._validRaces[0], wizzyData._classID, wizzyData._realm, wizzyData._creationModel,
                 initialGLocation.zone, initialGLocation.x,
-                initialGLocation.y, initialGLocation.z, wizzyData._specString, IDGenerator.GenerateID());
+                initialGLocation.y, initialGLocation.z, wizzyData._specString, Guid.NewGuid().ToString());
 
             // setup actions
             _actionTimer = new Timer(ActionCallback, null, 850, 1000);
 
         }
-        public void login()
-        {
-            _client.Login();
-        }
 
-        public void ActionCallback(Object source)
+        override public void ActionCallback(Object source)
         {
             // Cast PBAOE
-            _client.SendUseSpell(0, 48, 5);
+            if (isLoggedIn && actionEnabled)
+            {
+                _client.SendUseSpell(0, 48, 5);
+            }
+            
         }
     }
 }

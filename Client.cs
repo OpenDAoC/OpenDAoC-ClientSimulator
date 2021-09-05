@@ -7,14 +7,19 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection.Metadata;
 using System.Threading;
+using System.Windows;
 
 namespace AtlasSimulator
 {
+    
     public partial class Client : IDisposable
     {
+        public string Host = "127.0.0.1";
+        public int Port = 10300;
+
         private readonly string _username;
         private readonly string _password;
-        private readonly string _charName;
+        public readonly string _charName;
 
         private Timer _pingTimer;
         private Timer _positionTimer;
@@ -188,7 +193,7 @@ namespace AtlasSimulator
             {
                 Console.WriteLine($"{_username} logging in");
                 _hasConnectionSlot = ConnectionSlots.WaitOne();
-                _tcpSocket.BeginConnect(Program.Host, Program.Port, OnConnected, null);
+                _tcpSocket.BeginConnect(Host, Port, OnConnected, null);
             }
             catch (SocketException)
             {
@@ -410,7 +415,7 @@ namespace AtlasSimulator
         
         public void Dispose()
         {
-            Console.WriteLine("Disposing");
+           Console.WriteLine("Disposing");
             if (_hasConnectionSlot)
             {
                 ConnectionSlots.Release();

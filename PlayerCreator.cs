@@ -1,22 +1,13 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Text;
-using DOL.Database;
 using MySql.Data.MySqlClient;
-using AtlasSimulator;
 using AtlasSimulator.playerclasses;
-using log4net;
 
 namespace AtlasSimulator
 {
     class PlayerCreator
     {
-        public class Position
-        {
-            public int x, y, z;
-            public int zone;
-        };
-
         public enum Class
         {
             Paladin,
@@ -30,12 +21,12 @@ namespace AtlasSimulator
             _dbConnection = new MySqlConnection("server=localhost;user=root;database=atlas;port=3306;password=atlas");
         }
         
-        public void Create(IPlayerClass pc){
+        public void Create(PlayerClass pc){
             CreateAccount(pc);
             CreateChar(pc);
         }
 
-        public void CreateChar(IPlayerClass pc)
+        public void CreateChar(PlayerClass pc)
         {
             _dbConnection.Open();
             string sql = String.Format("SELECT Name FROM dolcharacters WHERE Name='{0}'", pc.charname);
@@ -59,18 +50,8 @@ namespace AtlasSimulator
             
         }
 
-        public void CreateAccount(IPlayerClass pc)
+        public void CreateAccount(PlayerClass pc)
         {
-            Account account = new Account
-            {
-                Name = pc.accountName,
-                Password = CryptPassword(pc.password),
-                PrivLevel = (uint)3,
-                Realm = (int)1,
-                CreationDate = DateTime.Now,
-                Language = "EN"
-            };
-
             _dbConnection.Open();
             string sql = String.Format("SELECT Name FROM account WHERE Name='{0}'",pc.accountName);
             MySqlCommand cmd = new MySqlCommand(sql, _dbConnection);
@@ -85,9 +66,9 @@ namespace AtlasSimulator
                 // Write Data
                 _dbConnection.Open();
                 Console.WriteLine(String.Format("Creating account named {0}!", pc.accountName));
-                string dateString = account.CreationDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string dateString = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 sql = String.Format("INSERT INTO account(Name,password,CreationDate,Realm,PrivLevel,Language,Account_ID) " +
-                    "VALUES('{0}','{1}','{2}',{3},{4},'{5}','{6}');", account.Name, account.Password, dateString, account.Realm, account.PrivLevel, account.Language, account.Name);
+                    "VALUES('{0}','{1}','{2}',{3},{4},'{5}','{6}');", pc.accountName, CryptPassword(pc.password), dateString, 1, 3, "EN", pc.accountName);
                 cmd = new MySqlCommand(sql, _dbConnection);
                 cmd.ExecuteNonQuery();
                 _dbConnection.Close();

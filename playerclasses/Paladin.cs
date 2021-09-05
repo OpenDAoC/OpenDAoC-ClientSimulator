@@ -1,18 +1,10 @@
 ﻿using System;
 using System.Threading;
-using DOL.Database.UniqueID;
 
 namespace AtlasSimulator.playerclasses
 {
-    public class Paladin : IPlayerClass
+    public class Paladin : PlayerClass
     {
-        public string accountName { get; }
-        public string charname { get; }
-        public string password { get; }
-        public string sql { get; }
-        private Client _client;
-        private Timer _actionTimer;
-
         public Paladin(string acc, string pw, string cn, GLocation initialGLocation)
         {
             // Assign
@@ -36,21 +28,20 @@ namespace AtlasSimulator.playerclasses
                 " '{8}', '{9}','{7}', '{8}', '{9}', '{5}', '191', '{10}', '{11}');",
                 accountName, charname, paladinData._validRaces[0], paladinData._classID, paladinData._realm, paladinData._creationModel,
                 initialGLocation.zone, initialGLocation.x,
-                initialGLocation.y, initialGLocation.z, paladinData._specString, IDGenerator.GenerateID());
+                initialGLocation.y, initialGLocation.z, paladinData._specString, Guid.NewGuid().ToString());
 
             // setup actions
             _actionTimer = new Timer(ActionCallback, null, 850, 8500);
 
         }
-        public void login()
-        {
-            _client.Login();
-        }
 
-        public void ActionCallback(Object source)
+        override public void ActionCallback(Object source)
         {
             // Cast Self AF Buff
-            _client.SendUseSkill(0, 13, 1);
+            if (isLoggedIn && actionEnabled)
+            {
+                _client.SendUseSkill(0, 13, 1);
+            }
         }
     }
 }
