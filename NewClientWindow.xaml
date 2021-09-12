@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:AtlasClientSimulator"
         mc:Ignorable="d"
         Title="New Client" Height="339" Width="500">
-    <Grid Margin="0,0,0,8">
+    <Grid Margin="0,0,0,3">
         <Label Content="Account Name" HorizontalAlignment="Left" Margin="10,20,0,0" VerticalAlignment="Top"/>
         <Label Content="Character Name" HorizontalAlignment="Left" Margin="10,61,0,0" VerticalAlignment="Top"/>
         <Label Content="Password" HorizontalAlignment="Left" Margin="10,92,0,0" VerticalAlignment="Top"/>
@@ -28,6 +28,12 @@
         <Label Content="zone" HorizontalAlignment="Left" Margin="54,242,0,0" VerticalAlignment="Top"/>
         <Label Content="Preset Locations" HorizontalAlignment="Left" Margin="176,187,0,0" VerticalAlignment="Top"/>
         <ComboBox Name="presetList" HorizontalAlignment="Left" Margin="176,210,0,0" VerticalAlignment="Top" Width="99" Height="20" SelectionChanged="presetList_SelectionChanged"/>
+        <CheckBox Name="multipleCheckBox" Content="Enable Multiple" HorizontalAlignment="Left" Margin="330,20,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="Input_Count" HorizontalAlignment="Left" Margin="379,50,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="70" Height="20" Text="1"/>
+        <Label Content="Count" HorizontalAlignment="Left" Margin="330,47,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="Input_Spread" HorizontalAlignment="Left" Margin="379,82,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="70" Height="20"/>
+        <Label Content="Spread" HorizontalAlignment="Left" Margin="330,79,0,0" VerticalAlignment="Top"/>
+        <TextBlock Name="Output_Error" HorizontalAlignment="Left" Margin="50,293,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Height="16" Width="391"/>
 
     </Grid>
 </Window>

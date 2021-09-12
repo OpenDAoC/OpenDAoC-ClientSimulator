@@ -74,25 +74,56 @@ namespace AtlasClientSimulator
 
         private void CreateButton_Click(object sender, RoutedEventArgs e)
         {
-            
-            GLocation g = new GLocation(Int32.Parse(xloc.Text), Int32.Parse(yloc.Text), Int32.Parse(zloc.Text), Int32.Parse(zone.Text));
-            ClassList c = (ClassList)classList.SelectedItem;
-            PlayerClass newClass;
-            switch(c)
+            // Check for multiples
+            int numberToCreate = 1;
+            int spread = 0;
+            if (multipleCheckBox.IsChecked == true)
             {
-                case ClassList.Wizard:
-                    newClass = new Wizard(Input_AccountName.Text, Input_Password.Text, Input_CharName.Text, g);
-                    break;
-                case ClassList.Paladin:
-                    newClass = new Paladin(Input_AccountName.Text, Input_Password.Text, Input_CharName.Text, g);
-                    break;
-                default:
-                    newClass = new Wizard(Input_AccountName.Text, Input_Password.Text, Input_CharName.Text, g);
-                    break;
+                numberToCreate = Int32.Parse(Input_Count.Text);
+
+                // Do some validation on that int
+                if(numberToCreate <= 0 || numberToCreate > 500)
+                {
+                    Output_Error.Text = "Invalid number of clients, must be between 1 and 500";
+                    return;
+                }
+
+                spread = Int32.Parse(Input_Spread.Text);
+                if (spread < 0 || spread > 50)
+                {
+                    Output_Error.Text = "Invalid spread value, must be between 0 and 50";
+                    return;
+                }
             }
-            pc.Create(newClass);
+
+            // Create the clients
             MainWindow mw = (MainWindow)Application.Current.MainWindow;
-            mw.clients.Add(newClass);
+            var rand = new Random();
+            for (int i = 0; i < numberToCreate; ++i)
+            {
+                GLocation g = new GLocation(Int32.Parse(xloc.Text)+rand.Next(-spread, spread), 
+                    Int32.Parse(yloc.Text) + rand.Next(-spread, spread), 
+                    Int32.Parse(zloc.Text), Int32.Parse(zone.Text));
+
+                ClassList c = (ClassList)classList.SelectedItem;
+                PlayerClass newClass;
+                string accountName = Input_AccountName.Text + i;
+                string charName = Input_CharName.Text + i;
+                switch (c)
+                {
+                    case ClassList.Wizard:
+                        newClass = new Wizard(accountName, Input_Password.Text, accountName, g);
+                        break;
+                    case ClassList.Paladin:
+                        newClass = new Paladin(accountName, Input_Password.Text, accountName, g);
+                        break;
+                    default:
+                        newClass = new Wizard(accountName, Input_Password.Text, accountName, g);
+                        break;
+                }
+                pc.Create(newClass);
+                mw.clients.Add(newClass);
+            }
             mw.clientList.Items.Refresh();
         }
     }
