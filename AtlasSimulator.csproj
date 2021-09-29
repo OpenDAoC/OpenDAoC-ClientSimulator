@@ -9,6 +9,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AtlasCore\Net5\DOLDatabase\DOLDatabase.csproj" />
+    <ProjectReference Include="..\AtlasCore\DOLDatabase\DOLDatabase.csproj" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31605.320
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AtlasSimulator", "AtlasSimulator.csproj", "{BA779956-D437-48DD-87F6-F689EF0F9D3B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DOLDatabase", "..\AtlasCore\Net5\DOLDatabase\DOLDatabase.csproj", "{3BA3F659-4DB2-443A-9910-38AA25CA080F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DOLDatabase", "..\AtlasCore\DOLDatabase\DOLDatabase.csproj", "{3BA3F659-4DB2-443A-9910-38AA25CA080F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
