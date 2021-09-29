@@ -24,11 +24,11 @@ namespace AtlasSimulator
             var rand = new Random();
             for (int i = 0; i < numAccounts; ++i)
             {
-                GLocation g = new GLocation(391433 + rand.Next(-spread,spread),755797 + rand.Next(-spread,spread),227,1);
+                GLocation g = new GLocation(390482 + rand.Next(-spread,spread),748466 + rand.Next(-spread,spread),370,1);
                 clients[i] = new Wizard("FooWizzy"+i, "FooPassword", "FooWizzy"+i, g);
                 pc.Create(clients[i] );
                 clients[i] .login();
-                Thread.Sleep(250);
+                Thread.Sleep(1000);
             }
 
             // Keep program alive
