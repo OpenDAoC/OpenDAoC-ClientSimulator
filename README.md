@@ -8,6 +8,8 @@ This is currently based on client version 1124.
 
 This project references AtlasCore/DOLDatabase ("..\AtlasCore\DOLDatabase\DOLDatabase.csproj") and must be cloned in parallel with AtlasCore. It might be possible to remove this reference at some point.
 
+Requires a mysql account (user: `atlassimulator` pass: `atlassimulator` with access to the DB `atlas`.
+
 The simulator has pretty limited capabilties at the moment and is mostly hardcoded to handle creation/login of level 50 paladins.
 
 One usage is provided that will create the required accounts and chars in the database if needed. You will need to update PlayerCreator.cs with your specific mySQL database details (username/password)
