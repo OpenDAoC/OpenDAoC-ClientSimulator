@@ -2,6 +2,7 @@
 using AtlasSimulator.playerclasses;
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ namespace AtlasClientSimulator
     {
         PlayerCreator pc = new PlayerCreator();
         public List<PlayerClass> clients;
+        private bool allCasting = false;
 
         public MainWindow()
         {
@@ -86,6 +88,23 @@ namespace AtlasClientSimulator
             var checkbox = (CheckBox)sender;
             var client = (PlayerClass)checkbox.DataContext;
             client.actionEnabled = false;
+        }
+
+        private void ToggleAllCastHandler(object sender, RoutedEventArgs e)
+        {
+            allCasting = !allCasting;
+            foreach (var client in clients)
+            {
+                client.actionEnabled = allCasting;
+            }
+        }
+
+        private void LoginAllHandler(object sender, RoutedEventArgs e)
+        {
+            foreach (var client in clients)
+            {
+                if(!client.isLoggedIn) client.login();
+            }
         }
     }
 

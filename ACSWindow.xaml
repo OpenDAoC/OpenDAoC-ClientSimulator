@@ -31,9 +31,8 @@
         <Button Content="Clear Database" HorizontalAlignment="Left" Margin="24,293,0,0" VerticalAlignment="Top" Height="26" Width="143"/>
         <Button Content="Disconnect All" HorizontalAlignment="Left" Margin="24,338,0,0" VerticalAlignment="Top" Height="26" Width="143"/>
         <Button Content="Control Client"  HorizontalAlignment="Left" Margin="24,150,0,0" VerticalAlignment="Top" Height="26" Width="143"/>
-        <Button Content="Login All" HorizontalAlignment="Left" Margin="240,363,0,0" VerticalAlignment="Top" Width="55"/>
-        <Button Content="Cast All" HorizontalAlignment="Left" Margin="310,363,0,0" VerticalAlignment="Top" Width="55"/>
-
-
+        <Button Content="Login All" Click="LoginAllHandler" HorizontalAlignment="Left" Margin="240,363,0,0" VerticalAlignment="Top" Width="55"/>
+        <Button Content="Cast All" Click="ToggleAllCastHandler" HorizontalAlignment="Left" Margin="310,363,0,0" VerticalAlignment="Top" Width="55"/>
+        
     </Grid>
 </Window>
