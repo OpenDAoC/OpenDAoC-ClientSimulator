@@ -18,7 +18,7 @@ namespace AtlasSimulator
 
         public PlayerCreator()
         {
-            _dbConnection = new MySqlConnection("server=localhost;user=root;database=atlas;port=3306;password=atlas");
+            _dbConnection = new MySqlConnection("server=localhost;user=atlas;database=atlas;port=3306;password=atlas");
         }
         
         public void Create(PlayerClass pc){

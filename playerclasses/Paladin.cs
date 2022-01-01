@@ -40,7 +40,27 @@ namespace AtlasSimulator.playerclasses
             // Cast Self AF Buff
             if (isLoggedIn && actionEnabled)
             {
+                _client.SendUseSkill(0, 15, 1);
+                Thread.Sleep(500);
+                _client.SendUseSkill(0, 14, 1);
+                Thread.Sleep(500);
                 _client.SendUseSkill(0, 13, 1);
+                Thread.Sleep(500);
+                _client.SendUseSkill(0, 18, 1);
+                Thread.Sleep(500);
+                _client.SendUseSkill(0, 19, 1);
+                Thread.Sleep(500);
+                _client.SendUseSkill(0, 20, 1);
+                Thread.Sleep(500);
+                _client.SendUseSkill(0, 21, 1);
+                Thread.Sleep(500);
+                _client.SendUseSkill(0, 22, 1);
+                Thread.Sleep(500);
+                // AF Buff - 13
+                // AF Chant - 15
+                // DA Chant - 14
+                // Endo Chant - 13
+                // Soul chant - 18
             }
         }
     }
