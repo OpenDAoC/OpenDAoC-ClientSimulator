@@ -68,6 +68,7 @@ namespace AtlasSimulator
                 PrivLevel = (uint)3,
                 Realm = (int)1,
                 CreationDate = DateTime.Now,
+                DiscordID = "AtlasSimulator",
                 Language = "EN"
             };
 

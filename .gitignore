@@ -32,3 +32,5 @@
 /nuget.exe
 /Debug.zip
 .idea/
+/bin/
+/obj/
