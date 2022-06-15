@@ -87,7 +87,7 @@ namespace AtlasSimulator
                 _dbConnection.Open();
                 Console.WriteLine(String.Format("Creating account named {0}!", pc.accountName));
                 string dateString = account.CreationDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sql = String.Format("INSERT INTO account(Name,password,CreationDate,Realm,PrivLevel,Language,Account_ID) " +
+                sql = String.Format("INSERT INTO account(Name,password,CreationDate,Realm,PrivLevel,Language,Account_ID,DiscordID) " +
                     "VALUES('{0}','{1}','{2}',{3},{4},'{5}','{6}','{7}');", account.Name, account.Password, dateString, account.Realm, account.PrivLevel, account.Language, account.Name, account.DiscordID);
                 cmd = new MySqlCommand(sql, _dbConnection);
                 cmd.ExecuteNonQuery();
