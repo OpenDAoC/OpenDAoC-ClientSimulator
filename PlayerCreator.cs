@@ -65,7 +65,7 @@ namespace AtlasSimulator
             {
                 Name = pc.accountName,
                 Password = CryptPassword(pc.password),
-                PrivLevel = (uint)3,
+                PrivLevel = (uint)1,
                 Realm = (int)1,
                 CreationDate = DateTime.Now,
                 DiscordID = "AtlasSimulator",
@@ -87,8 +87,8 @@ namespace AtlasSimulator
                 _dbConnection.Open();
                 Console.WriteLine(String.Format("Creating account named {0}!", pc.accountName));
                 string dateString = account.CreationDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sql = String.Format("INSERT INTO account(Name,password,CreationDate,Realm,PrivLevel,Language,Account_ID,DiscordID) " +
-                    "VALUES('{0}','{1}','{2}',{3},{4},'{5}','{6}','{7}');", account.Name, account.Password, dateString, account.Realm, account.PrivLevel, account.Language, account.Name, account.DiscordID);
+                sql = String.Format("INSERT INTO `atlas`.`account`(`Name`,`Password`,`CreationDate`,`Realm`,`PrivLevel`,`Status`,`LastLoginIP`,`LastClientVersion`,`Language`,`IsMuted`,`LastTimeRowUpdated`,`Account_ID`,`IsWarned`,`IsTester`,`DiscordID`,`CharactersTraded`,`SoloCharactersTraded`,`Realm_Timer_Realm`,`Realm_Timer_Last_Combat`)" +
+                    " VALUES('{0}','{1}','{2}',{3}, '{4}', '0', '127.0.0.1', '1124', '{5}', '0', '{6}', '{7}', '0', '0', '{8}', '0', '0', '{9}', '0001-01-01 00:00:15');", account.Name, account.Password, dateString, account.Realm, account.PrivLevel, account.Language, dateString, account.Name, account.DiscordID, account.Realm);
                 cmd = new MySqlCommand(sql, _dbConnection);
                 cmd.ExecuteNonQuery();
                 _dbConnection.Close();

@@ -181,6 +181,22 @@ namespace AtlasSimulator
             Send(buffer, pos);
         }
 
+        public void SendLOSCheck(ushort player, ushort targetOID)
+        {
+            //Console.WriteLine("Calling SendUseSkill: " + spellType.ToString());
+            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
+            var pos = WriteHeader(buffer, 0xD0);
+            WriteUShort(buffer, ref pos, player);
+            WriteUShort(buffer, ref pos, targetOID);
+            WriteUShort(buffer, ref pos, 0);
+            WriteUShort(buffer, ref pos, 0);
+
+            WriteLength(buffer, pos);
+            pos = AppendChecksum(buffer, 0, pos);
+
+            Send(buffer, pos);
+        }
+
         private void SendPositionUpdate()
         {
             //Console.WriteLine("Calling SendPositionUpdate");

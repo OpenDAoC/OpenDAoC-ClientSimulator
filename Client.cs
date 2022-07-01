@@ -288,6 +288,9 @@ namespace AtlasSimulator
                 case 0x4E:
                     HandleControlledHorse(buffer, pos, bodyLen);
                     break;
+                case 0xD0:
+                    HandleLOSCheck(buffer, pos, bodyLen);
+                    break;
             }
         }
 

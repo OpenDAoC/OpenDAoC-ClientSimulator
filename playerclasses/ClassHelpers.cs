@@ -38,7 +38,7 @@ namespace AtlasSimulator.playerclasses
             int creationModel = 12352;
             int realm = 1;
             int classid = 7;
-            string specString = "Earth Magic|50;Cold Magic|50;Fire Magic|50";
+            string specString = "Earth Magic|1;Cold Magic|50;Fire Magic|1";
             return new ClassData(wizardRaceSelection, creationModel,classid,realm,specString);
         }
     }

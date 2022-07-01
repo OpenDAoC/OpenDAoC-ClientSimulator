@@ -73,6 +73,15 @@ namespace AtlasSimulator
             SendWorldInitRequest();
         }
 
+        private void HandleLOSCheck(byte[] buffer, int pos, int bodyLen)
+        {
+            var player = ReadUShort(buffer, ref pos);
+            var target = ReadUShort(buffer, ref pos);
+            var unknwn1 = ReadUShort(buffer, ref pos);
+            var unknwn2 = ReadUShort(buffer, ref pos);
+            SendLOSCheck(player, target);
+        }
+
         private void HandleStatusUpdate(byte[] buffer, int pos, int bodyLen)
         {
             //Console.WriteLine("Calling HandleStatusUpdate - NI");
