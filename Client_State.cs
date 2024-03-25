@@ -1,4 +1,4 @@
-﻿namespace AtlasSimulator
+﻿namespace ClientSimulator
 {
     public partial class Client
     {
@@ -18,6 +18,5 @@
         private ushort ZoneId;
         private ushort PositionHeading;
         private float PositionSpeed;
-        
     }
 }

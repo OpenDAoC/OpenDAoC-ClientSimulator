@@ -2,7 +2,7 @@
 using System.Threading;
 using DOL.Database.UniqueID;
 
-namespace AtlasSimulator.playerclasses
+namespace ClientSimulator.PlayerClass
 {
     public class Paladin : IPlayerClass
     {
@@ -11,22 +11,25 @@ namespace AtlasSimulator.playerclasses
         public string password { get; }
         public string sql { get; }
         private Client _client;
-        private Timer _actionTimer;
+        public string AccountName { get; }
+        public string CharName { get; }
+        public string Password { get; }
+        public string Sql { get; }
 
-        public Paladin(string acc, string pw, string cn, GLocation initialGLocation)
+        public Paladin(string account, string password, string charName, GameLocation gameLocation)
         {
             // Assign
-            accountName = acc;
-            password = pw;
-            charname = cn;
-            
+            AccountName = account;
+            Password = password;
+            CharName = charName;
+
             // setup client
-            _client = new Client(acc, pw, cn);
+            _client = new Client(account, password, charName, gameLocation);
 
             // handle adding to the database
             ClassHelpers.ClassData paladinData = ClassHelpers.GetPaladinData();
 
-            sql = String.Format(
+            Sql = string.Format(
                 "INSERT INTO `atlas`.`dolcharacters` (`Constitution`, `Dexterity`, `Strength`, `Quickness`, `Intelligence`," +
                 " `Piety`, `Empathy`, `Charisma`, `MaxEndurance`, `Endurance`, `Concentration`, `AccountName`, `AccountSlot`," +
                 "`Name`, `Race`, `Level`, `Class`, `Realm`, `CreationModel`, `CurrentModel`, `Region`, `Xpos`," +
@@ -34,20 +37,20 @@ namespace AtlasSimulator.playerclasses
                 " VALUES('400', '400', '400', '400', '400', '400', '400', '400', '100', '100', '100'," +
                 " '{0}', '1', '{1}', '{2}', '50', '{3}', '{4}', '{5}', '{5}', '{6}', '{7}'," +
                 " '{8}', '{9}','{7}', '{8}', '{9}', '{5}', '191', '{10}', '{11}');",
-                accountName, charname, paladinData._validRaces[0], paladinData._classID, paladinData._realm, paladinData._creationModel,
-                initialGLocation.zone, initialGLocation.x,
-                initialGLocation.y, initialGLocation.z, paladinData._specString, IDGenerator.GenerateID());
+                AccountName, CharName, paladinData.ValidRaces[0], paladinData.ClassID, paladinData.Realm, paladinData.CreationModel,
+                gameLocation.zone, gameLocation.x,
+                gameLocation.y, gameLocation.z, paladinData.SpecString, IdGenerator.GenerateID());
 
             // setup actions
-            _actionTimer = new Timer(ActionCallback, null, 850, 8500);
-
+            _client.ActionTimer = new Timer(ActionCallback, null, 850, 8500);
         }
-        public void login()
+
+        public void Login()
         {
             _client.Login();
         }
 
-        public void ActionCallback(Object source)
+        public void ActionCallback(object source)
         {
             // Cast Self AF Buff
             _client.SendUseSkill(0, 13, 1);

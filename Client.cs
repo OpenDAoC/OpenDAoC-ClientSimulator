@@ -1,68 +1,89 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection.Metadata;
 using System.Threading;
 
-namespace AtlasSimulator
+namespace ClientSimulator
 {
     public partial class Client : IDisposable
     {
-        private readonly string _username;
-        private readonly string _password;
-        private readonly string _charName;
+        public const int WRITTER_BUFFER_SIZE = 1024 * 16;
+        public const int READ_BUFFER_SIZE = 1024 * 16;
+        private static SemaphoreSlim _connectionSlots = new(1, 1);
 
+        private string _userName;
+        private string _password;
+        private string _charName;
         private Timer _pingTimer;
+        private Timer _udpPingTimer;
         private Timer _positionTimer;
-
-        public const int ServerHeaderReadBufferSize = 3;
-        public const int WriterBufferSize = 2048;
-        public const int ReadBufferSize = 2048;
         private Socket _tcpSocket;
+        private Socket _udpSocket;
+        private bool _hasConnectionSlot;
+        private bool _disposed;
 
-        private readonly SocketAsyncEventArgs _tcpReceiverSargs;
-        private readonly byte[] TcpReadBuffer = new byte[ReadBufferSize];
-        
-        
-        private readonly Queue<(byte[] buffer, int len)> _sendMessageQueue = new Queue<(byte[] buffer, int len)>(128);
-        private readonly Semaphore _writeSemaphore = new Semaphore(1,1);
-        private readonly object _sendMessageLock = new object();
-        
-        public Client(string username, string password, string charName)
+        private byte[] _tcpReadBuffer = new byte[READ_BUFFER_SIZE];
+        private SocketAsyncEventArgs _tcpReceiverSocketArgs;
+        private Queue<(byte[] buffer, int len)> _tcpSendQueue = new(128);
+        private SemaphoreSlim _tcpSendSemaphore = new(1, 1);
+        private object _tcpSendLock = new();
+        private byte[] _partialTcpMessage = new byte[1024 * 16];
+        private int _partialTcpWritten;
+
+        private byte[] _udpReadBuffer = new byte[READ_BUFFER_SIZE];
+        private SocketAsyncEventArgs _udpReceiverSocketArgs;
+        private Queue<(byte[] buffer, int len)> _udpSendQueue = new(128);
+        private SemaphoreSlim _udpSendSemaphore = new(1, 1);
+        private object _udpSendLock = new();
+        private byte[] _partialUdpMessage = new byte[1024 * 16];
+        private int _partialUdpWritten;
+
+        public Timer ActionTimer { private get; set; }
+
+        public Client(string username, string password, string charName, GameLocation initialGLocation)
         {
-            _username = username;
+            _userName = username;
             _password = password;
             _charName = charName;
-            _tcpReceiverSargs = new SocketAsyncEventArgs();
-            _tcpReceiverSargs.Completed += TcpReceiverSargsOnCompleted;
-            _tcpReceiverSargs.SetBuffer(TcpReadBuffer, 0, ReadBufferSize);
+
+            _tcpReceiverSocketArgs = new SocketAsyncEventArgs();
+            _tcpReceiverSocketArgs.Completed += TcpReceiverSocketArgsOnCompletion;
+            _tcpReceiverSocketArgs.SetBuffer(_tcpReadBuffer, 0, READ_BUFFER_SIZE);
             _tcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _udpReceiverSocketArgs = new SocketAsyncEventArgs();
+
+            _udpReceiverSocketArgs.Completed += UdpReceiverSocketArgsOnCompletion;
+            _udpReceiverSocketArgs.SetBuffer(_udpReadBuffer, 0, READ_BUFFER_SIZE);
+            _udpReceiverSocketArgs.RemoteEndPoint = Program.SERVER_UDP_ENDPOINT;
+            _udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _udpSocket.Bind(new IPEndPoint(IPAddress.Parse(Program.LOCAL_IP), 0));
+
+            ZoneX = initialGLocation.x;
+            ZoneY = initialGLocation.y;
+            ZoneZ = initialGLocation.z;
         }
 
-        private readonly byte[] _partialMessage = new byte[ReadBufferSize];
-        private int _partialWritten;
-
-        private void TcpReceiverSargsOnCompleted(object sender, SocketAsyncEventArgs socketAsyncEventArgs)
+        private void TcpReceiverSocketArgsOnCompletion(object sender, SocketAsyncEventArgs socketAsyncEventArgs)
         {
-            Process(socketAsyncEventArgs);
+            ProcessIn(_tcpReceiverSocketArgs, _tcpSocket, _tcpReadBuffer, _partialTcpMessage, ref _partialTcpWritten, false);
         }
 
-        // public void setAction(TimerCallback tcb)
-        // {
-        //     _actionCallback = tcb;
-        // }
-
-        private void Process(SocketAsyncEventArgs sargs)
+        private void UdpReceiverSocketArgsOnCompletion(object sender, SocketAsyncEventArgs socketAsyncEventArgs)
         {
+            ProcessIn(_udpReceiverSocketArgs, _udpSocket, _udpReadBuffer, _partialUdpMessage, ref _partialUdpWritten, true);
+        }
+
+        private void ProcessIn(SocketAsyncEventArgs args, Socket socket, byte[] readBuffer, byte[] partialMessage, ref int partialWritten, bool isUdp)
+        {
+            int headerSize = isUdp ? 5 : 3;
+
             try
             {
                 while (true)
                 {
-                    var read = sargs.BytesTransferred;
+                    int read = args.BytesTransferred;
 
                     if (read == 0)
                     {
@@ -70,131 +91,172 @@ namespace AtlasSimulator
                         Dispose();
                         return;
                     }
-                    
-                    var pos = 0;
 
-                    int len;
+                    int position = 0;
+                    int length;
                     byte msgType;
-                    if (_partialWritten > 0)
+
+                    if (partialWritten > 0)
                     {
                         byte v1, v2;
-                        if (_partialWritten == 1)
-                        {
-                            v1 = _partialMessage[0];
-                            v2 = TcpReadBuffer[0];
-                            len = (v1 << 8) | v2;
 
-                            var remaining = len + 2;
-                            Buffer.BlockCopy(TcpReadBuffer, 0, _partialMessage, 1, remaining);
-                            pos = remaining;
+                        if (partialWritten == 1)
+                        {
+                            v1 = partialMessage[0];
+                            v2 = readBuffer[0];
+                            length = (v1 << 8) | v2;
+
+                            int remaining = length + 2;
+                            Buffer.BlockCopy(readBuffer, 0, partialMessage, 1, remaining);
+                            position = remaining;
                         }
-                        else if (_partialWritten == 2)
+                        else if (partialWritten == 2)
                         {
-                            v1 = _partialMessage[0];
-                            v2 = _partialMessage[1];
+                            v1 = partialMessage[0];
+                            v2 = partialMessage[1];
 
-                            len = (v1 << 8) | v2;
+                            length = (v1 << 8) | v2;
 
-                            var remaining = len + 1;
-                            Buffer.BlockCopy(TcpReadBuffer, 0, _partialMessage, 2, remaining);
-                            pos = remaining;
+                            int remaining = length + 1;
+                            Buffer.BlockCopy(readBuffer, 0, partialMessage, 2, remaining);
+                            position = remaining;
                         }
                         else
                         {
-                            v1 = _partialMessage[0];
-                            v2 = _partialMessage[1];
+                            v1 = partialMessage[0];
+                            v2 = partialMessage[1];
 
-                            len = (v1 << 8) | v2;
+                            length = (v1 << 8) | v2;
 
-                            var remaining = len - (_partialWritten - 3);
-                            Buffer.BlockCopy(TcpReadBuffer, 0, _partialMessage, _partialWritten - 1, remaining);
-                            pos = remaining;
+                            int remaining = length - (partialWritten - headerSize);
+                            Buffer.BlockCopy(readBuffer, 0, partialMessage, partialWritten, remaining);
+                            position = remaining;
                         }
 
-                        msgType = _partialMessage[2];
-                        _partialWritten = 0;
-                        ProcessReceivedPackage(_partialMessage, 3, len, msgType);
-
+                        msgType = partialMessage[2];
+                        partialWritten = 0;
+                        ProcessReceivedPacket(partialMessage, headerSize, length, msgType);
                     }
 
-                    while (pos < read)
+                    while (position < read)
                     {
-                        if (read - pos < 3)
+                        if (read - position < headerSize)
                         {
-                            Buffer.BlockCopy(TcpReadBuffer, pos, _partialMessage, 0, read - pos);
-                            _partialWritten = read - pos;
+                            Buffer.BlockCopy(readBuffer, position, partialMessage, 0, read - position);
+                            partialWritten = read - position;
                             break;
                         }
 
-                        var v1 = TcpReadBuffer[pos++];
-                        var v2 = TcpReadBuffer[pos++];
+                        byte v1 = readBuffer[position++];
+                        byte v2 = readBuffer[position++];
+                        length = (v1 << 8) | v2;
 
-                        len = (v1 << 8) | v2;
-                        msgType = TcpReadBuffer[pos++];
+                        if (isUdp)
+                            position += 2;
 
-                        if (read - pos < len)
+                        msgType = readBuffer[position++];
+
+                        if (read - position < length)
                         {
-                            Buffer.BlockCopy(TcpReadBuffer, pos - 3, _partialMessage, 0, read - pos + 3);
-                            _partialWritten = read - pos + 3;
+                            try
+                            {
+                                Buffer.BlockCopy(readBuffer, position - headerSize, partialMessage, 0, read - position + headerSize);
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine($"Buffer.BlockCopy failed: {readBuffer} | {position - headerSize} | {partialMessage} | {read - position + headerSize}");
+                                Dispose();
+                                return;
+                            }
+
+                            partialWritten = read - position + headerSize;
                             break;
                         }
 
-                        ProcessReceivedPackage(TcpReadBuffer, pos, len, msgType);
-                        pos += len;
+                        ProcessReceivedPacket(readBuffer, position, length, msgType);
+                        position += length;
                     }
 
                     bool asyncReceived;
 
                     try
                     {
-                        asyncReceived = _tcpSocket.ReceiveAsync(_tcpReceiverSargs);
+                        asyncReceived = socket.ReceiveAsync(args);
                     }
                     catch (SocketException)
                     {
+                        Console.WriteLine($"{nameof(ProcessIn)} failed: SocketException");
                         Dispose();
                         return;
                     }
                     catch (NullReferenceException)
                     {
+                        Console.WriteLine($"{nameof(ProcessIn)} failed: NullReferenceException");
                         Dispose();
                         return;
                     }
-                    catch (Exception ex)
+                    catch (Exception e)
                     {
-                        Console.WriteLine("Unexpected Exception (Process): {0}", ex);
+                        Console.WriteLine($"{nameof(ProcessIn)} failed:\n{e}");
                         Dispose();
                         return;
                     }
                     
                     if (asyncReceived)
-                    {
                         break;
-                    }
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("Unexpected Exception (Process2): {0}", e);
+                Console.WriteLine($"{nameof(ProcessIn)} failed:\n{e}");
                 Dispose();
             }
         }
 
-        public static System.Threading.Semaphore ConnectionSlots = new Semaphore(1, 1);
-
-        private bool _hasConnectionSlot;
         public void Login()
         {
+            Console.WriteLine($"{_userName} logging in");
+
             try
             {
-                Console.WriteLine($"{_username} logging in");
-                _hasConnectionSlot = ConnectionSlots.WaitOne();
-                _tcpSocket.BeginConnect(Program.Host, Program.Port, OnConnected, null);
+                _connectionSlots.Wait();
+                _hasConnectionSlot = true;
+                _tcpSocket.BeginConnect(Program.REMOTE_IP, Program.REMOTE_TCP_PORT, OnConnected, null);
             }
             catch (SocketException)
             {
-                Console.WriteLine("Login Failed");
+                Console.WriteLine($"{nameof(Login)} failed: SocketException");
                 Dispose();
                 return;
+            }
+            catch (ObjectDisposedException)
+            {
+                Console.WriteLine($"{nameof(Login)} failed: ObjectDisposedException");
+                Dispose();
+                return;
+            }
+
+            BeginListenUdp();
+        }
+
+        private void BeginListenUdp()
+        {
+            try
+            {
+                if (!_udpSocket.ReceiveFromAsync(_udpReceiverSocketArgs))
+                    UdpReceiverSocketArgsOnCompletion(null, null);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine($"{nameof(BeginListenUdp)} failed: SocketException");
+            }
+            catch (ObjectDisposedException)
+            {
+                Console.WriteLine($"{nameof(BeginListenUdp)} failed: ObjectDisposedException");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{nameof(BeginListenUdp)} failed: {e}");
             }
         }
 
@@ -205,182 +267,295 @@ namespace AtlasSimulator
                 _tcpSocket.EndConnect(ar);
             }
             catch (SocketException)
-            { 
-                
-                Console.WriteLine("Login Failed");
+            {
+                Console.WriteLine($"{nameof(OnConnected)} failed: SocketException");
                 Dispose();
                 return;
             }
-            
+            catch (ObjectDisposedException)
+            {
+                Console.WriteLine($"{nameof(OnConnected)} failed: ObjectDisposedException");
+                Dispose();
+                return;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{nameof(OnConnected)} failed:\n{e}");
+                Dispose();
+                return;
+            }
+
             Connected = true;
-
             SendCryptKeyRequest();
-
             bool asyncReceived;
 
             try
             {
-                asyncReceived = _tcpSocket.ReceiveAsync(_tcpReceiverSargs);
+                asyncReceived = _tcpSocket.ReceiveAsync(_tcpReceiverSocketArgs);
             }
             catch (SocketException)
             {
+                Console.WriteLine($"{nameof(OnConnected)} failed: SocketException");
                 Dispose();
                 return;
             }
-            catch (NullReferenceException)
+            catch (ObjectDisposedException)
             {
+                Console.WriteLine($"{nameof(OnConnected)} failed: ObjectDisposedException");
                 Dispose();
                 return;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
+                Console.WriteLine($"{nameof(OnConnected)} failed:\n{e}");
                 Dispose();
-                Console.WriteLine("Unexpected Exception (OnConnected): {0}", ex);
                 return;
             }
             
             if (!asyncReceived)
-            {
-                Process(_tcpReceiverSargs);
-            }
+                TcpReceiverSocketArgsOnCompletion(null, null);
         }
 
-        private void ProcessReceivedPackage(byte[] buffer, int pos, int bodyLen, byte msgType)
+        private void ProcessReceivedPacket(byte[] buffer, int position, int length, byte code)
         {
-            switch (msgType)
+            switch (code)
             {
                 case 0x22:
-                    HandleVersionAndCryptKeyResponse(buffer, pos, bodyLen);
+                    HandleVersionAndCryptKeyResponse(buffer, position, length);
                     break;
                 case 0x2A:
-                    HandleLoginGrantedResponse(buffer, pos, bodyLen);
+                    HandleLoginGrantedResponse(buffer, position, length);
                     break;
                 case 0x29:
-                    HandlePingReply(buffer, pos, bodyLen);
+                    HandlePingReply(buffer, position, length);
                     break;
                 case 0x28:
-                    HandleSetSessionId(buffer, pos, bodyLen);
+                    HandleSetSessionId(buffer, position, length);
                     break;
                 case 0xFE:
-                    HandleSetRealm(buffer, pos, bodyLen);
+                    HandleSetRealm(buffer, position, length);
                     break;
                 case 0xFD:
-                    HandleCharacterOverview(buffer, pos, bodyLen);
+                    HandleCharacterOverview(buffer, position, length);
                     break;
                 case 0xB1:
-                    HandleStartArena(buffer, pos, bodyLen);
+                    HandleStartArena(buffer, position, length);
                     break;
                 case 0x2D:
-                    HandleGameOpenReply(buffer, pos, bodyLen);
+                    HandleGameOpenReply(buffer, position, length);
                     break;
                 case 0xAD:
-                    HandleStatusUpdate(buffer, pos, bodyLen);
+                    HandleStatusUpdate(buffer, position, length);
                     break;
                 case 0x20:
-                    HandleSetPlayerPositionAndOid(buffer, pos, bodyLen);
+                    HandleSetPlayerPositionAndOid(buffer, position, length);
                     break;
                 case 0xA9:
-                    HandlePlayerPositionUpdate(buffer, pos, bodyLen);
+                    HandlePlayerPositionUpdate(buffer, position, length);
                     break;
                 case 0x2B:
-                    HandlePlayerInitResponse(buffer, pos, bodyLen);
+                    HandlePlayerInitResponse(buffer, position, length);
                     break;
                 case 0x4E:
-                    HandleControlledHorse(buffer, pos, bodyLen);
+                    HandleControlledHorse(buffer, position, length);
                     break;
                 case 0xD0:
-                    HandleLOSCheck(buffer, pos, bodyLen);
+                    HandleLosCheck(buffer, position, length);
+                    break;
+                case 0x2F:
+                    HandleUDPInitReply(buffer, position, length);
                     break;
             }
         }
 
-        public void Send(byte[] buffer, int len)
+        public void SendTcp(byte[] buffer, int length)
         {
             try
             {
-                if (!_writeSemaphore.WaitOne(0))
+                if (!_tcpSendSemaphore.Wait(0))
                 {
-                    lock (_sendMessageLock)
+                    lock (_tcpSendLock)
                     {
-                        _sendMessageQueue.Enqueue((buffer, len));
+                        _tcpSendQueue.Enqueue((buffer, length));
 
-                        if (!_writeSemaphore.WaitOne(0))
-                        {
+                        if (!_tcpSendSemaphore.Wait(0))
                             return;
-                        }
 
-                        (buffer, len) = _sendMessageQueue.Dequeue();
+                        (buffer, length) = _tcpSendQueue.Dequeue();
                     }
                 }
-                _tcpSocket.BeginSend(buffer, 0, len, SocketFlags.None, OnSent, buffer);
+
+                _tcpSocket.BeginSend(buffer, 0, length, SocketFlags.None, OnTcpSent, buffer);
             }
             catch (SocketException)
             {
+                Console.WriteLine($"{nameof(SendTcp)} failed: SocketException");
                 Dispose();
             }
             catch (NullReferenceException)
             {
+                Console.WriteLine($"{nameof(SendTcp)} failed: NullReferenceException");
                 Dispose();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
+                Console.WriteLine($"{nameof(SendTcp)} failed:\n{e}");
                 Dispose();
-                Console.WriteLine("Unexpected Exception (Send): {0}", ex);
             }
         }
 
-        private void OnSent(IAsyncResult ar)
+        public void SendUdp(byte[] buffer, int length)
         {
-            SocketError err;
             try
             {
-                _tcpSocket.EndSend(ar, out err);
+                if (!_udpSendSemaphore.Wait(0))
+                {
+                    lock (_udpSendLock)
+                    {
+                        _udpSendQueue.Enqueue((buffer, length));
+
+                        if (!_udpSendSemaphore.Wait(0))
+                            return;
+
+                        (buffer, length) = _udpSendQueue.Dequeue();
+                    }
+                }
+
+                _udpSocket.BeginSendTo(buffer, 0, length, SocketFlags.None, Program.SERVER_UDP_ENDPOINT, OnUdpSent, buffer);
             }
             catch (SocketException)
             {
+                Console.WriteLine($"{nameof(SendUdp)} failed: SocketException");
+                Dispose();
+            }
+            catch (NullReferenceException)
+            {
+                Console.WriteLine($"{nameof(SendUdp)} failed: NullReferenceException");
+                Dispose();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{nameof(SendUdp)} failed:\n{e}");
+                Dispose();
+            }
+        }
+
+        private void OnTcpSent(IAsyncResult result)
+        {
+            SocketError socketError;
+
+            try
+            {
+                _tcpSocket.EndSend(result, out socketError);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine($"{nameof(OnTcpSent)} failed: SocketException");
                 Dispose();
                 return;
             }
             catch (NullReferenceException)
             {
+                Console.WriteLine($"{nameof(OnTcpSent)} failed: NullReferenceException");
                 Dispose();
                 return;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine("Unexpected Exception (OnSent): {0}", ex);
+                Console.WriteLine($"{nameof(OnTcpSent)} failed:\n{e}");
                 Dispose();
                 return;
             }
 
-            var buffer = (byte[]) ar.AsyncState;
+            byte[] buffer = (byte[]) result.AsyncState;
             ArrayPool<byte>.Shared.Return(buffer, true);
-            if (err != SocketError.Success)
+
+            if (socketError != SocketError.Success)
             {
-                var foo = err;
+                Console.WriteLine($"{nameof(OnTcpSent)} failed: {socketError}");
                 Dispose();
                 return;
             }
 
             try
             {
-                lock (_sendMessageLock)
+                lock (_tcpSendLock)
                 {
-                    if (_sendMessageQueue.Count == 0)
+                    if (_tcpSendQueue.Count == 0)
                     {
-                        _writeSemaphore.Release();
+                        _tcpSendSemaphore.Release();
                         return;
                     }
 
-                    int len;
-                    (buffer, len) = _sendMessageQueue.Dequeue();
-                    _tcpSocket.BeginSend(buffer, 0, len, SocketFlags.None, OnSent, buffer);
+                    int length;
+                    (buffer, length) = _tcpSendQueue.Dequeue();
+                    _tcpSocket.BeginSend(buffer, 0, length, SocketFlags.None, OnTcpSent, buffer);
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
+                Console.WriteLine($"{nameof(OnTcpSent)} failed:\n{e}");
                 Dispose();
-                Console.WriteLine("Unexpected Exception (OnSent2): {0}", ex);
+                return;
+            }
+        }
+
+        private void OnUdpSent(IAsyncResult result)
+        {
+            SocketError socketError;
+
+            try
+            {
+                _udpSocket.EndSend(result, out socketError);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine($"{nameof(OnUdpSent)} failed: SocketException");
+                Dispose();
+                return;
+            }
+            catch (NullReferenceException)
+            {
+                Console.WriteLine($"{nameof(OnUdpSent)} failed: NullReferenceException");
+                Dispose();
+                return;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{nameof(OnUdpSent)} failed:\n{e}");
+                Dispose();
+                return;
+            }
+
+            byte[] buffer = (byte[]) result.AsyncState;
+            ArrayPool<byte>.Shared.Return(buffer, true);
+
+            if (socketError != SocketError.Success)
+            {
+                Console.WriteLine($"{nameof(OnUdpSent)} failed: {socketError}");
+                Dispose();
+                return;
+            }
+
+            try
+            {
+                lock (_udpSendLock)
+                {
+                    if (_udpSendQueue.Count == 0)
+                    {
+                        _udpSendSemaphore.Release();
+                        return;
+                    }
+
+                    int length;
+                    (buffer, length) = _udpSendQueue.Dequeue();
+                    _udpSocket.BeginSend(buffer, 0, length, SocketFlags.None, OnUdpSent, buffer);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{nameof(OnUdpSent)} failed:\n{e}");
+                Dispose();
                 return;
             }
         }
@@ -388,69 +563,57 @@ namespace AtlasSimulator
         private void Ping(object state)
         {
             if (Connected && LoggedIn)
-            {
                 SendPingReply();
-            }
             else
-            {
                 _pingTimer.Dispose();
-            }
-        }
-        
-        private void PositionTimerCallback(object state)
-        {
-            if (Connected && LoggedIn)
-            {
-                SendPositionUpdate();
-            }
-            else
-            {
-                _positionTimer.Dispose();
-            }
         }
 
-        private bool _disposed;
-        
+        private void UdpPing(object state)
+        {
+            if (Connected && LoggedIn)
+                SendUdpInitRequest(); // We ping with init, server replies and we sent ping back.
+            else
+                _udpPingTimer.Dispose();
+        }
+
+        private void PositionUpdateTimerCallback(object state)
+        {
+            if (Connected && LoggedIn)
+                SendPositionUpdate();
+            else
+                _positionTimer.Dispose();
+        }
+
         public void Dispose()
         {
-            Console.WriteLine("Disposing");
+            GC.SuppressFinalize(this);
+
             if (_hasConnectionSlot)
             {
-                ConnectionSlots.Release();
+                _connectionSlots.Release();
                 _hasConnectionSlot = false;
             }
             
             if (!_disposed)
             {
-                
-                
                 _disposed = true;
-                
                 _pingTimer?.Dispose();
+                _udpPingTimer?.Dispose();
                 _positionTimer?.Dispose();
                 _tcpSocket?.Dispose();
-                _tcpReceiverSargs?.Dispose();
-                _writeSemaphore?.Dispose();
-
-                _pingTimer = null;
-                _positionTimer = null;
-                _tcpSocket = null;
-                
-                Console.WriteLine("Disposed {0}", _charName);
+                _udpSocket?.Dispose();
+                ActionTimer?.Dispose();
+                _tcpReceiverSocketArgs?.Dispose();
+                _tcpSendSemaphore?.Dispose();
+                _udpSendSemaphore?.Dispose();
+                Console.WriteLine($"Disposed {_charName}");
             }
         }
     }
-    
-    public class GLocation
+
+    public class GameLocation(int x, int y, int z, int zone)
     {
-        public GLocation(int x, int y, int z, int zone)
-        {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.zone = zone;
-        }
-        public int x, y, z;
-        public int zone;
+        public int x = x, y = y, z = z;
+        public int zone = zone;
     };
 }

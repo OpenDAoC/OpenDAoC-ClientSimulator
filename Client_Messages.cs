@@ -1,38 +1,37 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
 
-namespace AtlasSimulator
+namespace ClientSimulator
 {
     public partial class Client
     {        
         private void SendCryptKeyRequest()
         {
-            //Console.WriteLine("Calling SendCryptKeyRequest");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xF4);
-            
+#if DEBUG
+            Console.WriteLine($"{nameof(SendCryptKeyRequest)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xF4);
             buffer[pos++] = 0x80 + 6;
-            buffer[pos++] = 0x01; // major 
+            buffer[pos++] = 0x01; // major
             buffer[pos++] = 0x01; // minor
             buffer[pos++] = 24;   // patch
             buffer[pos++] = 61;   // rev?
             buffer[pos++] = 0x00;
             buffer[pos++] = 0x00;
-            
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
         private void SendLoginRequest(string username, string password)
         {
-            //Console.WriteLine("Calling SendLoginRequest");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xA7);
-            
+#if DEBUG
+            Console.WriteLine($"{nameof(SendLoginRequest)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xA7);
             WriteUShort(buffer, ref pos, 36); // Client Type
             buffer[pos++] = 0x01; // Major
             buffer[pos++] = 0x02; // Minor
@@ -41,111 +40,110 @@ namespace AtlasSimulator
             buffer[pos++] = 0;
             WriteLowEndianShortPascalString(buffer, ref pos, username);
             WriteLowEndianShortPascalString(buffer, ref pos, password);
-            
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
         private void SendPingReply()
         {
-            //Console.WriteLine("Calling SendPingReply");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xA3);
-            
+#if DEBUG
+            Console.WriteLine($"{nameof(SendPingReply)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xA3);
             WriteIntLowEndian(buffer, ref pos, 0); // Unknown
-            
             WriteInt(buffer, ref pos, (int)DateTime.Now.Ticks);
-            
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
         private void SendCharacterSelectRequest()
         {
-            //Console.WriteLine("Calling SendCharacterSelectRequest");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0x10);
-            
-            WriteIntLowEndian(buffer, ref pos, 0); // Unknown
-            buffer[pos++] = 0; // Unknown
+#if DEBUG
+            Console.WriteLine($"{nameof(SendCharacterSelectRequest)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0x10);
+            WriteIntLowEndian(buffer, ref pos, 0);
+            buffer[pos++] = 0;
             WriteFixedWidthString(buffer, ref pos, _charName, 28);
-            
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
-            
+            SendTcp(buffer, pos);
             CharacterSelected = true;
         }
 
         private void SendGameOpenRequest()
         {
-            //Console.WriteLine("Calling SendGameOpenRequest");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xBF);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendGameOpenRequest)} >>");
+#endif
 
-            buffer[pos++] = 0; // Use UDP = false
-            
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xBF);
+            buffer[pos++] = 0; // Always 0? (1.127)
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
         private void SendOverviewRequest()
         {
-            //Console.WriteLine("Calling SendOverviewRequest");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xFC);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendOverviewRequest)} >>");
+#endif
 
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xFC);
             buffer[pos++] = 0x01;
-            WriteFixedWidthString(buffer, ref pos, $"{_username}-S", 24);
-            
+            WriteFixedWidthString(buffer, ref pos, $"{_userName}-S", 24);
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
             OverviewRequested = true;
         }
 
         private void SendWorldInitRequest()
         {
-            //Console.WriteLine("Calling SendWorldInitRequest");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xD4);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendWorldInitRequest)} >>");
+#endif
 
-            WriteIntLowEndian(buffer, ref pos, 0); // Unknown
-            
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xD4);
+            WriteIntLowEndian(buffer, ref pos, 0);
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
         private void SendPlayerInitRequest()
         {
-            //Console.WriteLine("Calling SendPlayerInitRequest");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xE8);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendPlayerInitRequest)} >>");
+#endif
 
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xE8);
             WriteIntLowEndian(buffer, ref pos, 0); // Unknown
-            
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
             PlayerInitSent = true;
         }
 
         public void SendUseSkill(ushort speedData, byte spellIndex, byte spellType)
         {
-            //Console.WriteLine("Calling SendUseSkill: " + spellType.ToString());
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xBB);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendUseSkill)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xBB);
             WriteFloat32LowEndian(buffer, ref pos, ZoneX);
             WriteFloat32LowEndian(buffer, ref pos, ZoneY);
             WriteFloat32LowEndian(buffer, ref pos, ZoneZ);
@@ -157,15 +155,17 @@ namespace AtlasSimulator
             WriteUShort(buffer, ref pos, 0);
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
         public void SendUseSpell(ushort speedData, byte spellLevel, byte spellLineIndex)
         {
-            //Console.WriteLine("Calling SendUseSkill: " + spellType.ToString());
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0x7D);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendUseSpell)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0x7D);
             WriteFloat32LowEndian(buffer, ref pos, ZoneX);
             WriteFloat32LowEndian(buffer, ref pos, ZoneY);
             WriteFloat32LowEndian(buffer, ref pos, ZoneZ);
@@ -177,31 +177,34 @@ namespace AtlasSimulator
             WriteUShort(buffer, ref pos, 0);
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
-        public void SendLOSCheck(ushort player, ushort targetOID)
+        public void SendLosCheck(ushort player, ushort targetOID)
         {
-            //Console.WriteLine("Calling SendUseSkill: " + spellType.ToString());
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xD0);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendLosCheck)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xD0);
             WriteUShort(buffer, ref pos, player);
             WriteUShort(buffer, ref pos, targetOID);
             WriteUShort(buffer, ref pos, 0);
             WriteUShort(buffer, ref pos, 0);
-
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
         }
 
         private void SendPositionUpdate()
         {
-            //Console.WriteLine("Calling SendPositionUpdate");
-            var buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WriterBufferSize);
-            var pos = WriteHeader(buffer, 0xA9);
+#if DEBUG
+            Console.WriteLine($"{nameof(SendPositionUpdate)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xA9);
             WriteFloat32LowEndian(buffer, ref pos, ZoneX);
             WriteFloat32LowEndian(buffer, ref pos, ZoneY);
             WriteFloat32LowEndian(buffer, ref pos, ZoneZ);
@@ -218,12 +221,37 @@ namespace AtlasSimulator
             buffer[pos++] = 100; // health %
             buffer[pos++] = 100; // mana %
             buffer[pos++] = 100; // endu %
-            
-            
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
-            
-            Send(buffer, pos);
+            SendTcp(buffer, pos);
+        }
+
+        private void SendUdpInitRequest()
+        {
+#if DEBUG
+            Console.WriteLine($"{nameof(SendUdpInitRequest)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0x14);
+            WriteFixedWidthString(buffer, ref pos, string.Empty, 20);
+            WriteUShort(buffer, ref pos, 0);
+            WriteLength(buffer, pos);
+            pos = AppendChecksum(buffer, 0, pos);
+            SendUdp(buffer, pos);
+        }
+
+        private void SendUdpPingRequest()
+        {
+#if DEBUG
+            Console.WriteLine($"{nameof(SendUdpPingRequest)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xF2);
+            WriteLength(buffer, pos);
+            pos = AppendChecksum(buffer, 0, pos);
+            SendUdp(buffer, pos);
         }
     }
 }

@@ -1,34 +1,39 @@
 ﻿using System;
-using System.Linq;
+using System.Net;
 using System.Threading;
-using AtlasSimulator.playerclasses;
+using ClientSimulator.PlayerClass;
 
-namespace AtlasSimulator
+namespace ClientSimulator
 {
     class Program
     {
-        public const string Host = "127.0.0.1";
-        public const int Port = 10300;
+        public const string REMOTE_IP = "127.0.0.1";
+        public const string LOCAL_IP = "127.0.0.1";
+        public const int REMOTE_TCP_PORT = 10300;
+        public const int REMOTE_UDP_PORT = 10400;
+        public const string DB_IP = "localhost";
+        public const string DB = "opendaoc";
+        public const string DB_USER = "opendaoc";
+        public const string DB_PASSWORD = "opendaoc";
+        public const int DB_PORT = 3306;
+
+        public static IPEndPoint SERVER_UDP_ENDPOINT = new(IPAddress.Parse(REMOTE_IP), REMOTE_UDP_PORT);
 
         internal static void Main(string[] args)
         {
-            // Class to handle DB creation
-            PlayerCreator pc = new PlayerCreator();
-            
-            // Simple Test case
+            PlayerCreator pc = new();
+            int numAccounts = 1000;
+            int spread = 0;
+            IPlayerClass[] clients = new IPlayerClass[numAccounts];
+            Random rand = new();
 
-
-            int numAccounts = 50;
-            int spread = 50;
-            var clients = new IPlayerClass[numAccounts];
-            var rand = new Random();
             for (int i = 0; i < numAccounts; ++i)
             {
-                GLocation g = new GLocation(390482 + rand.Next(-spread,spread),748466 + rand.Next(-spread,spread),370,1);
-                clients[i] = new Wizard("FooWizzy"+i, "FooPassword", "FooWizzy"+i, g);
-                pc.Create(clients[i] );
-                clients[i] .login();
-                Thread.Sleep(1000);
+                GameLocation gameLocation = new(390482 + rand.Next(-spread,spread), 748466 + rand.Next(-spread,spread), 370, 1);
+                clients[i] = new Wizard("FooWizzy"+i, "FooPassword", "FooWizzy"+i, gameLocation);
+                pc.Create(clients[i]);
+                clients[i].Login();
+                Thread.Sleep(10);
             }
 
             // Keep program alive

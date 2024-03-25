@@ -1,40 +1,29 @@
-﻿using System.Numerics;
-
-namespace AtlasSimulator.playerclasses
+﻿namespace ClientSimulator.PlayerClass
 {
     public class ClassHelpers
     {
-        public class ClassData
+        public class ClassData(int[] races, int creationModel, int classid, int realm, string specString)
         {
-            public int[] _validRaces;
-            public int _classID;
-            public string _specString;
-            public int _realm;
-            public int _creationModel;
-            
-            public ClassData(int[] races, int creationModel, int classid, int realm, string specString)
-            {
-                _validRaces = races;
-                _classID = classid;
-                _specString = specString;
-                _realm = realm;
-                _creationModel = creationModel;
-            }
+            public int[] ValidRaces { get; } = races;
+            public int ClassID { get; } = classid;
+            public string SpecString { get; } = specString;
+            public int Realm { get; } = realm;
+            public int CreationModel { get; } = creationModel;
         }
 
         public static ClassData GetPaladinData()
         {
-            int[] paladinRaceSelection = new int[] {1};
+            int[] paladinRaceSelection = [1];
             int creationModel = 37122;
             int realm = 1;
             int classid = 1;
             string specString = "Slash|50;Thrust|1;Crush|1;Two Handed|50;Chants|50;Shields|50;Parry|1";
             return new ClassData(paladinRaceSelection, creationModel,classid,realm,specString);
         }
-        
+
         public static ClassData GetWizardData()
         {
-            int[] wizardRaceSelection = new int[] {1};
+            int[] wizardRaceSelection = [1];
             int creationModel = 12352;
             int realm = 1;
             int classid = 7;

@@ -1,14 +1,12 @@
-﻿using System.Threading;
-
-namespace AtlasSimulator.playerclasses
+﻿namespace ClientSimulator.PlayerClass
 {
     public interface IPlayerClass
     {
-        public string sql { get; }
-        string accountName { get; }
-        string charname { get; }
-        string password { get; }
-        
-        public void login();
+        string Sql { get; }
+        string AccountName { get; }
+        string CharName { get; }
+        string Password { get; }
+
+        void Login();
     }
 }
