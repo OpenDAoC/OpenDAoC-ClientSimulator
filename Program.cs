@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net;
-using System.Threading;
 using ClientSimulator.PlayerClass;
 
 namespace ClientSimulator
@@ -22,7 +21,7 @@ namespace ClientSimulator
         internal static void Main(string[] args)
         {
             PlayerCreator pc = new();
-            int numAccounts = 1000;
+            int numAccounts = 2000;
             int spread = 0;
             IPlayerClass[] clients = new IPlayerClass[numAccounts];
             Random rand = new();
@@ -33,7 +32,6 @@ namespace ClientSimulator
                 clients[i] = new Wizard("FooWizzy"+i, "FooPassword", "FooWizzy"+i, gameLocation);
                 pc.Create(clients[i]);
                 clients[i].Login();
-                Thread.Sleep(10);
             }
 
             // Keep program alive

@@ -11,7 +11,7 @@ namespace ClientSimulator
     {
         public const int WRITTER_BUFFER_SIZE = 1024 * 16;
         public const int READ_BUFFER_SIZE = 1024 * 16;
-        private static SemaphoreSlim _connectionSlots = new(1, 1);
+        private static SemaphoreSlim _connectionSlots = new(100, 100);
 
         private string _userName;
         private string _password;
