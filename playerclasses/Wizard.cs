@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using DOL.Database.UniqueID;
 
 namespace ClientSimulator.PlayerClass
@@ -30,7 +29,7 @@ namespace ClientSimulator.PlayerClass
             ClassHelpers.ClassData wizzyData = ClassHelpers.GetWizardData();
 
             Sql = string.Format(
-                "INSERT INTO `opendaoc`.`dolcharacters`(`HasGravestone`,`GravestoneRegion`,`Constitution`,`Dexterity`,`Strength`,`Quickness`,`Intelligence`,`Piety`,`Empathy`,`Charisma`,`BountyPoints`,`RealmPoints`,`RealmLevel`,`Experience`,`MaxEndurance`,`Health`,`Mana`,`Endurance`,`Concentration`,`AccountName`,`AccountSlot`,`CreationDate`,`LastPlayed`,`Name`,`GuildID`,`Gender`,`Race`,`Level`,`Class`,`Realm`,`CreationModel`,`CurrentModel`,`Region`,`ActiveWeaponSlot`,`Xpos`,`Ypos`,`Zpos`,`BindXpos`,`BindYpos`,`BindZpos`,`BindRegion`,`BindHeading`,`BindHouseXpos`,`BindHouseYpos`,`BindHouseZpos`,`BindHouseRegion`," +
+                $"INSERT INTO `{Program.DB}`.`dolcharacters`(`HasGravestone`,`GravestoneRegion`,`Constitution`,`Dexterity`,`Strength`,`Quickness`,`Intelligence`,`Piety`,`Empathy`,`Charisma`,`BountyPoints`,`RealmPoints`,`RealmLevel`,`Experience`,`MaxEndurance`,`Health`,`Mana`,`Endurance`,`Concentration`,`AccountName`,`AccountSlot`,`CreationDate`,`LastPlayed`,`Name`,`GuildID`,`Gender`,`Race`,`Level`,`Class`,`Realm`,`CreationModel`,`CurrentModel`,`Region`,`ActiveWeaponSlot`,`Xpos`,`Ypos`,`Zpos`,`BindXpos`,`BindYpos`,`BindZpos`,`BindRegion`,`BindHeading`,`BindHouseXpos`,`BindHouseYpos`,`BindHouseZpos`,`BindHouseRegion`," +
                 "`BindHouseHeading`,`DeathCount`,`ConLostAtDeath`,`Direction`,`MaxSpeed`,`Copper`,`Silver`,`Gold`,`Platinum`,`Mithril`,`SerializedCraftingSkills`,`SerializedAbilities`,`SerializedSpecs`,`SerializedRealmAbilities`,`DisabledSpells`,`DisabledAbilities`,`SerializedFriendsList`,`SerializedIgnoreList`,`IsCloakHoodUp`,`IsCloakInvisible`,`IsHelmInvisible`,`SpellQueue`,`IsLevelSecondStage`,`FlagClassName`,`Advisor`,`GuildRank`,`PlayedTime`,`DeathTime`,`RespecAmountAllSkill`,`RespecAmountSingleSkill`,`RespecAmountRealmSkill`,`RespecAmountDOL`,`RespecAmountChampionSkill`,`IsLevelRespecUsed`,`RespecBought`,`SafetyFlag`," +
                 "`CraftingPrimarySkill`,`CancelStyle`,`IsAnonymous`,`CustomisationStep`,`EyeSize`,`LipSize`,`EyeColor`,`HairColor`,`FaceType`,`HairStyle`,`MoodType`,`UsedLevelCommand`,`CurrentTitleType`,`KillsAlbionPlayers`,`KillsMidgardPlayers`,`KillsHiberniaPlayers`,`KillsAlbionDeathBlows`,`KillsMidgardDeathBlows`,`KillsHiberniaDeathBlows`,`KillsAlbionSolo`,`KillsMidgardSolo`,`KillsHiberniaSolo`,`CapturedKeeps`,`CapturedTowers`,`CapturedRelics`,`KillsDragon`,`DeathsPvP`,`KillsLegion`,`KillsEpicBoss`,`GainXP`,`GainRP`,`Autoloot`,`LastFreeLeveled`,`LastFreeLevel`,`GuildNote`,`ShowXFireInfo`,`NoHelp`,`ShowGuildLogins`,`Champion`," +
                 "`ChampionLevel`,`ChampionExperience`,`ML`,`MLExperience`,`MLLevel`,`MLGranted`,`RPFlag`,`IgnoreStatistics`,`NotDisplayedInHerald`,`ActiveSaddleBags`,`LastTimeRowUpdated`,`DOLCharacters_ID`,`LastLevelUp`,`PlayedTimeSinceLevel`,`ReceiveROG`,`HCFlag`,`HCCompleted`,`isBoosted`,`HideSpecializationAPI`)" +

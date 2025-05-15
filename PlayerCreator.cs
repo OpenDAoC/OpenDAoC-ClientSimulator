@@ -76,7 +76,7 @@ namespace ClientSimulator
                 _dbConnection.Open();
                 Console.WriteLine($"Creating account named {pc.AccountName}!");
                 string dateString = account.CreationDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                sql = string.Format("INSERT INTO `opendaoc`.`account`(`Name`,`Password`,`CreationDate`,`Realm`,`PrivLevel`,`Status`,`LastLoginIP`,`LastClientVersion`,`Language`,`IsMuted`,`LastTimeRowUpdated`,`Account_ID`,`IsWarned`,`IsTester`,`DiscordID`,`CharactersTraded`,`SoloCharactersTraded`,`Realm_Timer_Realm`,`Realm_Timer_Last_Combat`)" +
+                sql = string.Format($"INSERT INTO `{Program.DB}`.`account`(`Name`,`Password`,`CreationDate`,`Realm`,`PrivLevel`,`Status`,`LastLoginIP`,`LastClientVersion`,`Language`,`IsMuted`,`LastTimeRowUpdated`,`Account_ID`,`IsWarned`,`IsTester`,`DiscordID`,`CharactersTraded`,`SoloCharactersTraded`,`Realm_Timer_Realm`,`Realm_Timer_Last_Combat`)" +
                     " VALUES('{0}','{1}','{2}',{3}, '{4}', '0', '127.0.0.1', '1124', '{5}', '0', '{6}', '{7}', '0', '0', '{8}', '0', '0', '{9}', '0001-01-01 00:00:15');", account.Name, account.Password, dateString, account.Realm, account.PrivLevel, account.Language, dateString, account.Name, account.DiscordID, account.Realm);
                 cmd = new MySqlCommand(sql, _dbConnection);
                 cmd.ExecuteNonQuery();

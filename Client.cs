@@ -9,8 +9,8 @@ namespace ClientSimulator
 {
     public partial class Client : IDisposable
     {
-        public const int WRITTER_BUFFER_SIZE = 1024 * 16;
-        public const int READ_BUFFER_SIZE = 1024 * 16;
+        public const int WRITTER_BUFFER_SIZE = 1024 * 64;
+        public const int READ_BUFFER_SIZE = 1024 * 64;
         private static SemaphoreSlim _connectionSlots = new(100, 100);
 
         private string _userName;
@@ -20,7 +20,7 @@ namespace ClientSimulator
         private Timer _udpPingTimer;
         private Timer _positionTimer;
         private Socket _tcpSocket;
-        private Socket _udpSocket;
+        private static Socket _udpSocket;
         private bool _hasConnectionSlot;
         private bool _disposed;
 
@@ -29,18 +29,28 @@ namespace ClientSimulator
         private Queue<(byte[] buffer, int len)> _tcpSendQueue = new(128);
         private SemaphoreSlim _tcpSendSemaphore = new(1, 1);
         private object _tcpSendLock = new();
-        private byte[] _partialTcpMessage = new byte[1024 * 16];
+        private byte[] _partialTcpMessage = new byte[1024 * 64];
         private int _partialTcpWritten;
 
-        private byte[] _udpReadBuffer = new byte[READ_BUFFER_SIZE];
-        private SocketAsyncEventArgs _udpReceiverSocketArgs;
-        private Queue<(byte[] buffer, int len)> _udpSendQueue = new(128);
-        private SemaphoreSlim _udpSendSemaphore = new(1, 1);
-        private object _udpSendLock = new();
-        private byte[] _partialUdpMessage = new byte[1024 * 16];
-        private int _partialUdpWritten;
+        private static byte[] _udpReadBuffer = new byte[READ_BUFFER_SIZE];
+        private static SocketAsyncEventArgs _udpReceiverSocketArgs;
+        private static Queue<(byte[] buffer, int len)> _udpSendQueue = new(128);
+        private static SemaphoreSlim _udpSendSemaphore = new(1, 1);
+        private static object _udpSendLock = new();
+        private static byte[] _partialUdpMessage = new byte[1024 * 64];
+        private static int _partialUdpWritten;
 
         public Timer ActionTimer { private get; set; }
+
+        static Client()
+        {
+            _udpReceiverSocketArgs = new SocketAsyncEventArgs();
+            _udpReceiverSocketArgs.Completed += UdpReceiverSocketArgsOnCompletion;
+            _udpReceiverSocketArgs.SetBuffer(_udpReadBuffer, 0, READ_BUFFER_SIZE);
+            _udpReceiverSocketArgs.RemoteEndPoint = Program.SERVER_UDP_ENDPOINT;
+            _udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _udpSocket.Bind(new IPEndPoint(IPAddress.Parse(Program.LOCAL_IP), 0));
+        }
 
         public Client(string username, string password, string charName, GameLocation initialGLocation)
         {
@@ -52,13 +62,6 @@ namespace ClientSimulator
             _tcpReceiverSocketArgs.Completed += TcpReceiverSocketArgsOnCompletion;
             _tcpReceiverSocketArgs.SetBuffer(_tcpReadBuffer, 0, READ_BUFFER_SIZE);
             _tcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _udpReceiverSocketArgs = new SocketAsyncEventArgs();
-
-            _udpReceiverSocketArgs.Completed += UdpReceiverSocketArgsOnCompletion;
-            _udpReceiverSocketArgs.SetBuffer(_udpReadBuffer, 0, READ_BUFFER_SIZE);
-            _udpReceiverSocketArgs.RemoteEndPoint = Program.SERVER_UDP_ENDPOINT;
-            _udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            _udpSocket.Bind(new IPEndPoint(IPAddress.Parse(Program.LOCAL_IP), 0));
 
             ZoneX = initialGLocation.x;
             ZoneY = initialGLocation.y;
@@ -70,9 +73,9 @@ namespace ClientSimulator
             ProcessIn(_tcpReceiverSocketArgs, _tcpSocket, _tcpReadBuffer, _partialTcpMessage, ref _partialTcpWritten, false);
         }
 
-        private void UdpReceiverSocketArgsOnCompletion(object sender, SocketAsyncEventArgs socketAsyncEventArgs)
+        private static void UdpReceiverSocketArgsOnCompletion(object sender, SocketAsyncEventArgs socketAsyncEventArgs)
         {
-            ProcessIn(_udpReceiverSocketArgs, _udpSocket, _udpReadBuffer, _partialUdpMessage, ref _partialUdpWritten, true);
+            // We're using a single listen UDP socket and there's no way to tell clients apart, so we just discard it.
         }
 
         private void ProcessIn(SocketAsyncEventArgs args, Socket socket, byte[] readBuffer, byte[] partialMessage, ref int partialWritten, bool isUdp)
@@ -201,7 +204,7 @@ namespace ClientSimulator
                         Dispose();
                         return;
                     }
-                    
+
                     if (asyncReceived)
                         break;
                 }
@@ -236,7 +239,8 @@ namespace ClientSimulator
                 return;
             }
 
-            BeginListenUdp();
+            // Not working, let's just use the TCP sockets for now.
+            // BeginListenUdp();
         }
 
         private void BeginListenUdp()
@@ -406,6 +410,9 @@ namespace ClientSimulator
 
         public void SendUdp(byte[] buffer, int length)
         {
+            // Not working, let's just use the TCP sockets for now.
+            return;
+
             try
             {
                 if (!_udpSendSemaphore.Wait(0))
