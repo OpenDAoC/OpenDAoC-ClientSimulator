@@ -369,6 +369,9 @@ namespace ClientSimulator
                 case 0x2F:
                     HandleUDPInitReply(buffer, position, length);
                     break;
+                case 0xB7:
+                    HandleRegionChanged(buffer, position, length);
+                    break;
             }
         }
 

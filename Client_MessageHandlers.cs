@@ -160,5 +160,15 @@ namespace ClientSimulator
 
             SendUdpPingRequest();
         }
+
+        private void HandleRegionChanged(byte[] buffer, int pos, int bodyLen)
+        {
+#if DEBUG
+            Console.WriteLine($"<< {nameof(HandleRegionChanged)}");
+#endif
+
+            PlayerInitSent = false;
+            SendWorldInitRequest();
+        }
     }
 }

@@ -203,6 +203,9 @@ namespace ClientSimulator
             Console.WriteLine($"{nameof(SendPositionUpdate)} >>");
 #endif
 
+            if (!PlayerInitSent)
+                return;
+
             byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
             int pos = WriteHeader(buffer, 0xA9);
             WriteFloat32LowEndian(buffer, ref pos, ZoneX);
