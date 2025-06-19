@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Text;
 
 namespace ClientSimulator
 {
     public partial class Client
-    {        
+    {
         private void SendCryptKeyRequest()
         {
 #if DEBUG
@@ -224,6 +225,28 @@ namespace ClientSimulator
             buffer[pos++] = 100; // health %
             buffer[pos++] = 100; // mana %
             buffer[pos++] = 100; // endu %
+            WriteLength(buffer, pos);
+            pos = AppendChecksum(buffer, 0, pos);
+            SendTcp(buffer, pos);
+        }
+
+        private void SendCommand(string command)
+        {
+#if DEBUG
+            Console.WriteLine($"{nameof(SendCommand)} >>");
+#endif
+
+            byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(WRITTER_BUFFER_SIZE);
+            int pos = WriteHeader(buffer, 0xAF);
+            buffer[pos++] = 0;
+            buffer[pos++] = 0;
+            buffer[pos++] = 0;
+            buffer[pos++] = 0;
+            buffer[pos++] = 0;
+            buffer[pos++] = 0;
+            buffer[pos++] = 0;
+            buffer[pos++] = 0;
+            WriteFixedWidthString(buffer, ref pos, command, Encoding.Default.GetByteCount(command));
             WriteLength(buffer, pos);
             pos = AppendChecksum(buffer, 0, pos);
             SendTcp(buffer, pos);
