@@ -54,7 +54,7 @@ namespace ClientSimulator
             if (!OverviewRequested)
                 SendOverviewRequest();
             else if (CharacterSelected)
-                SendGameOpenRequest();
+                SendWorldInitRequest();
         }
 
         private void HandleSetRealm(byte[] buffer, int pos, int bodyLen)
@@ -85,8 +85,6 @@ namespace ClientSimulator
 #if DEBUG
             Console.WriteLine($"<< {nameof(HandleGameOpenReply)}");
 #endif
-
-            SendWorldInitRequest();
         }
 
         private void HandleLosCheck(byte[] buffer, int pos, int bodyLen)
@@ -124,8 +122,9 @@ namespace ClientSimulator
             ZoneY = y_loc;
             ZoneZ = z_loc;
             PositionSpeed = 0;
+            SendGameOpenRequest();
         }
-        
+
         private void HandlePlayerPositionUpdate(byte[] buffer, int pos, int bodyLen)
         {
 #if DEBUG

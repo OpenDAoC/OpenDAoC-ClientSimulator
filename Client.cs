@@ -19,6 +19,7 @@ namespace ClientSimulator
         private Timer _pingTimer;
         private Timer _udpPingTimer;
         private Timer _positionTimer;
+        private Timer _adviceMessageTimer;
         private Socket _tcpSocket;
         private static Socket _udpSocket;
         private bool _hasConnectionSlot;
@@ -594,6 +595,14 @@ namespace ClientSimulator
                 _positionTimer.Dispose();
         }
 
+        private void AdviceMessageTimerCallback(object state)
+        {
+            if (Connected && LoggedIn)
+                SendCommand("&advice This is an advice message.");
+            else
+                _adviceMessageTimer.Dispose();
+        }
+
         public void Dispose()
         {
             GC.SuppressFinalize(this);
@@ -610,6 +619,7 @@ namespace ClientSimulator
                 _pingTimer?.Dispose();
                 _udpPingTimer?.Dispose();
                 _positionTimer?.Dispose();
+                _adviceMessageTimer?.Dispose();
                 _tcpSocket?.Dispose();
                 _udpSocket?.Dispose();
                 ActionTimer?.Dispose();
